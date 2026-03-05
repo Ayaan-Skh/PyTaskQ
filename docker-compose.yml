@@ -1,0 +1,74 @@
+# docker-compose.yml
+# This file defines the infrastructure our app needs.
+# Run: docker-compose up -d redis postgres
+# The -d flag means "detached" - runs in background.
+
+version: '3.9'
+
+services:
+  
+  redis:
+    image: redis:7.2-alpine
+    # alpine = minimal Linux image, much smaller than full Ubuntu-based image
+    # redis:7.2 specifically because Redis Streams (our queue) are stable in 7.x
+    
+    ports:
+      - "6379:6379"
+      # Maps host port 6379 → container port 6379
+      # Format: "host_port:container_port"
+      # This lets your code on the host connect to Redis as "localhost:6379"
+    
+    command: >
+      redis-server 
+      --appendonly yes
+      --appendfsync everysec
+    # --appendonly yes: Enable AOF (Append-Only File) persistence
+    # Without this, Redis loses ALL data on restart.
+    # --appendfsync everysec: Flush to disk every second.
+    # This means we can lose at most 1 second of data if Redis crashes.
+    # Alternative: everysync always (safer but 10x slower)
+    # Alternative: no (fastest but can lose data)
+    
+    volumes:
+      - redis_data:/data
+      # Persist Redis data across docker-compose down/up
+      # Without this, every restart starts with empty Redis.
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      # Docker will check if Redis is healthy before starting dependent services.
+      # redis-cli ping returns "PONG" if Redis is running.
+      # If Redis fails this check 5 times, Docker marks it as unhealthy.
+  
+  postgres:
+    image: postgres:16-alpine
+    
+    environment:
+      POSTGRES_DB: taskqueue
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # These match our .env defaults so local dev "just works"
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Persist PostgreSQL data across restarts
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      # pg_isready checks if PostgreSQL is accepting connections.
+
+volumes:
+  redis_data:
+  postgres_data:
+  # Docker named volumes - managed by Docker, survive container removal.
+  # Your data persists even if you run docker-compose down.
+  # To truly wipe data: docker-compose down -v (destroys volumes too).

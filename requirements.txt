@@ -23,5 +23,5 @@ httpx==0.25.2  # for testing FastAPI
 python-dotenv==1.0.0
 structlog==23.2.0  # structured logging (better than print)
 
-Monitoring (Week 4 - install when needed)
+# Monitoring (Week 4 - install when needed)
 prometheus-client==0.19.0
