@@ -124,5 +124,64 @@ class TaskSubmitRequest(BaseModel):
         max_length=255,
     )
     
+    @field_validator('task_type')
+    @classmethod
+    def task_type_must_be_valid(cls,v:str)->str:
+        """
+            Task types become function names internally
+            Prevents inkection attacks or lookup errors by enforcing pythons field validators
+        """
+        if not v.replace("_","").replace(".","").isalnum():
+            raise ValueError(
+                f"task_type must contail only letters, numbers, undeerscores and dots. Got:{v!r}"
+            )
+        return v.lower()
     
+class TaskSubmitResponse(BaseModel):
+    """
+        This is what we return to client after submitting the task
+        This is the Output schema for POST/tasks.
+        
+        Design principle: return enough info for the client to:
+    1. Track the task (task_id)
+    2. Know where it is in the system (status, queue)
+    3. Know where to check back (a hint about the status endpoint)
+    """
+    task_id:str
+    status:TaskStatus
+    priority:Priority
+    queue:str
+    created_at:datetime
+    message:str="Task submitted successfully"
+    
+class TaskStatusResponse(BaseModel):
+    """
+    Whats we return for GET/tasks/{task_id}
+    More detaieled than submission response
+    """    
+    task_id:str
+    task_type:str
+    status:TaskStatus
+    priority:Priority
+    args:dict[str,Any]
+    result:Optional[Any]=None   # Result is Null until task is complete. Then it holds the return value
+    error:Optional[str]=None# Error is null unless a task is failed. Then it holds the exception message
+    retry_count:int=0
+    max_count:int=3
+    started_at:Optional[datetime]=None
+    completed_at:Optional[datetime]=None
+    
+    @property
+    def duration_seconds(self):
+        """To calculate the time taken to do the task"""
+        if self.started_at and self.completed_at:
+            return (self.started_at - self.completed_at).total_seconds()
+        return None
+            
+class HealthResponse(BaseModel):
+    """Response for GET/health - shows system component status"""
+    status:str
+    redis:bool
+    postgres:bool
+    version:str="1.0.0"        
 
