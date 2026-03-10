@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     # ========Application settings===========
     APP_NAME:str="PytaskQ"
-    DEBUG:str=False
+    DEBUG:bool=False
     
     
     # ======= Redis settings ==========

@@ -21,7 +21,7 @@ class RedisClient:
     
     """
     def __init__(self):
-        self._client=Optional[aioredis.Redis]=None #The redis client connection instance
+        self._client:Optional[aioredis.Redis]=None #The redis client connection instance
     
     async def connect(self)->None:
         """Initialize Redis connection pool"""
