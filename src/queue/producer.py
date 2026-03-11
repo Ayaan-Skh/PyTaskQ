@@ -184,8 +184,10 @@ async def get_task_status(task_id:str)->Optional[dict]:
     """
     redis=redis_client.client
     task_key=f"dqt:task:{task_id}"
+    logger.info("getting redis task",task_key=task_key)
     
     task_data=await redis.hgetall(task_key)
+    logger.info("Got the task", task_key=task_key,task_data=task_data)
     if not task_data:
         return None
     
@@ -211,18 +213,17 @@ async def _check_idempotency(idempotency_key: str) -> Optional[str]:
     return await redis.get(key)
     # Returns task_id string if found, None if not found.
 
-async def get_queue_depths()->dict[str,int]:
+async def get_queue_depths() -> dict[str, int]:
     """
-    Returns the nubmer of tasks in the queue
-    Required for the monitoring endpoint 
+    Returns the number of tasks in each queue.
+    Required for the monitoring endpoint.
     """
-    redis=redis_client.client
-    depths={}
+    redis = redis_client.client
+    depths = {}
     
-    for priority,queue_name in PRIORITY_TO_QUEUE.items():
-        length=redis.xlen(queue_name)
-        
-        depths[priority.value]=length
+    for priority, queue_name in PRIORITY_TO_QUEUE.items():
+        length = await redis.xlen(queue_name)
+        depths[priority.value] = int(length)
     
     return depths    
         

@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException, status
 from datetime import datetime, timezone
 import structlog
 
+from src.config import settings
 from src.api.models import (
     TaskSubmitRequest,
     TaskSubmitResponse,

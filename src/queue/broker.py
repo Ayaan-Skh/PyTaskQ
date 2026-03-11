@@ -32,8 +32,8 @@ class RedisClient:
         self._client=aioredis.from_url(
             settings.REDIS_URL,
             encoding="utf-8",
-            decode_response=True,
-            max_conncetions=20,
+            decode_responses=True,
+            max_connections=20,
             # Connection pool size.
             # A pool keeps N connections open, reuses them for requests.
             # Real-life analogy: like a pool of taxi cabs.
@@ -48,7 +48,7 @@ class RedisClient:
             # silently dropped by your cloud provider's NAT, causing 
             # mysterious "connection reset" errors.
             
-            socke_connect_timeout=5,
+            socket_connect_timeout=5,
             # If Redis doesn't respond to a connection attempt within 5s, fail fast.
             # Without this, you might wait forever on a dead Redis.
             
